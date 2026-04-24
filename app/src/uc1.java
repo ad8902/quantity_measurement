@@ -1,6 +1,6 @@
 public class uc1 {
 
-    // ===== ENUM: Length Units =====
+    // ===== ENUM =====
     enum LengthUnit {
         FEET(1.0),
         INCH(1.0 / 12.0),
@@ -22,7 +22,7 @@ public class uc1 {
         }
     }
 
-    // ===== VALUE OBJECT: QuantityLength =====
+    // ===== VALUE OBJECT =====
     static class QuantityLength {
 
         private final double value;
@@ -35,6 +35,7 @@ public class uc1 {
             this.unit = unit;
         }
 
+        // ===== Validation =====
         private static void validate(double value, LengthUnit unit) {
             if (unit == null) {
                 throw new IllegalArgumentException("Unit cannot be null");
@@ -79,18 +80,24 @@ public class uc1 {
             return target.fromFeet(base);
         }
 
-        // ===== UC6: Addition =====
+        // ===== PRIVATE UTILITY (UC7 KEY IMPROVEMENT) =====
+        private static double addInBase(QuantityLength q1, QuantityLength q2) {
+            return q1.toBaseUnit() + q2.toBaseUnit();
+        }
+
+        // ===== UC6: Addition (result in first operand unit) =====
         public QuantityLength add(QuantityLength other) {
             if (other == null) {
                 throw new IllegalArgumentException("Other quantity cannot be null");
             }
 
-            double sumFeet = this.toBaseUnit() + other.toBaseUnit();
+            double sumFeet = addInBase(this, other);
             double result = this.unit.fromFeet(sumFeet);
 
             return new QuantityLength(result, this.unit);
         }
 
+        // ===== UC7: Addition with Explicit Target Unit =====
         public static QuantityLength add(QuantityLength q1,
                                          QuantityLength q2,
                                          LengthUnit targetUnit) {
@@ -102,7 +109,7 @@ public class uc1 {
                 throw new IllegalArgumentException("Target unit cannot be null");
             }
 
-            double sumFeet = q1.toBaseUnit() + q2.toBaseUnit();
+            double sumFeet = addInBase(q1, q2);
             double result = targetUnit.fromFeet(sumFeet);
 
             return new QuantityLength(result, targetUnit);
@@ -111,9 +118,7 @@ public class uc1 {
         // ===== Equality =====
         @Override
         public boolean equals(Object obj) {
-
             if (this == obj) return true;
-
             if (obj == null || getClass() != obj.getClass()) return false;
 
             QuantityLength other = (QuantityLength) obj;
@@ -132,55 +137,30 @@ public class uc1 {
         }
     }
 
-    // ===== DEMO METHODS =====
-
-    public static void demonstrateConversion(double value,
-                                             LengthUnit from,
-                                             LengthUnit to) {
-
-        double result = QuantityLength.convert(value, from, to);
-        System.out.println(value + " " + from + " = " + result + " " + to);
-    }
-
-    public static void demonstrateAddition(QuantityLength q1,
-                                           QuantityLength q2) {
-
-        QuantityLength result = q1.add(q2);
-        System.out.println(q1 + " + " + q2 + " = " + result);
-    }
-
-    public static void demonstrateEquality(QuantityLength q1,
-                                           QuantityLength q2) {
-
-        System.out.println(q1 + " == " + q2 + " : " + q1.equals(q2));
-    }
-
-    // ===== MAIN METHOD =====
+    // ===== DEMO =====
     public static void main(String[] args) {
 
-        // ===== UC5: Conversion =====
-        demonstrateConversion(1.0, LengthUnit.FEET, LengthUnit.INCH);
-        demonstrateConversion(3.0, LengthUnit.YARD, LengthUnit.FEET);
-        demonstrateConversion(2.54, LengthUnit.CENTIMETER, LengthUnit.INCH);
+        QuantityLength a = new QuantityLength(1.0, LengthUnit.FEET);
+        QuantityLength b = new QuantityLength(12.0, LengthUnit.INCH);
 
-        // ===== UC6: Addition =====
-        QuantityLength q1 = new QuantityLength(1.0, LengthUnit.FEET);
-        QuantityLength q2 = new QuantityLength(12.0, LengthUnit.INCH);
-        demonstrateAddition(q1, q2); // 2 FEET
+        // UC6
+        System.out.println("UC6: " + a.add(b)); // 2 FEET
 
-        QuantityLength q3 = new QuantityLength(1.0, LengthUnit.YARD);
-        QuantityLength q4 = new QuantityLength(3.0, LengthUnit.FEET);
-        demonstrateAddition(q3, q4); // 2 YARD
+        // UC7
+        System.out.println("To FEET: " +
+                QuantityLength.add(a, b, LengthUnit.FEET));
 
-        // ===== Equality =====
-        demonstrateEquality(
-                new QuantityLength(1.0, LengthUnit.YARD),
-                new QuantityLength(36.0, LengthUnit.INCH)
-        );
+        System.out.println("To INCHES: " +
+                QuantityLength.add(a, b, LengthUnit.INCH));
 
-        demonstrateEquality(
-                new QuantityLength(1.0, LengthUnit.CENTIMETER),
-                new QuantityLength(0.393701, LengthUnit.INCH)
-        );
+        System.out.println("To YARDS: " +
+                QuantityLength.add(a, b, LengthUnit.YARD));
+
+        // Example
+        QuantityLength c = new QuantityLength(2.54, LengthUnit.CENTIMETER);
+        QuantityLength d = new QuantityLength(1.0, LengthUnit.INCH);
+
+        System.out.println("CM result: " +
+                QuantityLength.add(c, d, LengthUnit.CENTIMETER));
     }
 }
